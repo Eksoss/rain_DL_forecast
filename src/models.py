@@ -2,21 +2,43 @@ import tensorflow as tf
 
 from tensorflow.keras import layers, models
 
-def gen_model(input_shape=(None, 3 + 2)):
+def gen_model_v1(input_shape=(None, 3 + 2)):
     '''
-    Basic hard-coded model for 3 step forecast
+    Basic hard-coded model for 3 step forecast, first try using an tanh activation
+    before the usage of LSTM, as to simulate how the LSTMCell sees a information
+    input, but such assumption was incorrect due to the usage of sigmoid internally
+    which reduces the value of 'raw' tanh.
+    
+    Returns model that takes (N, channels) and outputs [(N + 3, 1), (N + 3, 2)]
+    which are values and categorical, so it can be checked the amount of rain
+    and probability of rainfall on those days.
+    
+    Parameters
+    ----------
+    input_shape : tuple
+        Tuple indicating the number os timesteps and number of channels the model
+        will be built with.
+        
+    Returns
+    -------
+    model : tensorflow.keras.models.Model
+        A keras Model that takes the input layer with the given input_shape and
+        two outputs, the first is the value, without activation and the second
+        is a for categorical output with logits, so also without activation.
+        
     '''
+    
     lstm_cell = layers.LSTMCell(32)
     lstm_rnn  = layers.RNN(lstm_cell, return_sequences=True, return_state=True)
 
-    _in = layers.Input(input_shape) # (None, 3 + 2)
+    _in = layers.Input(input_shape)
 
     c = layers.BatchNormalization()(_in)
 
     # abstração inicial
     c = layers.Dense(32)(c)
-    # usando tanh pois a saída padrão do lstm é tanh, quero manter o padrão
-    c = layers.Activation('tanh')(c)    
+    c = layers.BatchNormalization()(c)
+    c = layers.Activation('tanh')(c)
 
     out0, *state_warm = lstm_rnn(c)
 
@@ -33,62 +55,3 @@ def gen_model(input_shape=(None, 3 + 2)):
     model = models.Model(_in, [out_value, out_prob])
     return model
     
-def main():
-    import numpy as np
-    a = np.random.rand(100, 30, 5)
-    b = a[..., :1]
-    c = np.int32(b > 0.5)
-    model = gen_model()
-    model.compile('adam', ['mse', 'sparse_categorical_crossentropy'])
-    
-    model.fit(a[:, :-3], [b, c], epochs=10)
-    
-main()
-
-class FeedBack(tf.keras.Model):
-    def __init__(self, units, out_steps):
-        super().__init__()
-        self.out_steps = out_steps
-        self.units = units
-        self.lstm_cell = tf.keras.layers.LSTMCell(units)
-        # Also wrap the LSTMCell in an RNN to simplify the `warmup` method.
-        self.lstm_rnn = tf.keras.layers.RNN(self.lstm_cell, return_state=True)
-        self.dense = tf.keras.layers.Dense(num_features)
-
-
-    def warmup(self, inputs):
-        # inputs.shape => (batch, time, features)
-        # x.shape => (batch, lstm_units)
-        x, *state = self.lstm_rnn(inputs)
-
-        # predictions.shape => (batch, features)
-        prediction = self.dense(x)
-        return prediction, state
-        
-        
-    def call(self, inputs, training=None):
-        # Use a TensorArray to capture dynamically unrolled outputs.
-        predictions = []
-        # Initialize the LSTM state.
-        prediction, state = self.warmup(inputs)
-
-        # Insert the first prediction.
-        predictions.append(prediction)
-
-        # Run the rest of the prediction steps.
-        for n in range(1, self.out_steps):
-            # Use the last prediction as input.
-            x = prediction
-            # Execute one lstm step.
-            x, state = self.lstm_cell(x, states=state,
-                                      training=training)
-            # Convert the lstm output to a prediction.
-            prediction = self.dense(x)
-            # Add the prediction to the output.
-            predictions.append(prediction)
-
-        # predictions.shape => (time, batch, features)
-        predictions = tf.stack(predictions)
-        # predictions.shape => (batch, time, features)
-        predictions = tf.transpose(predictions, [1, 0, 2])
-        return predictions
