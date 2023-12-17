@@ -8,8 +8,8 @@ class Plot(callbacks.Callback):
     def __init__(self, x, y, times, name=''):
         super().__init__()
         self.x = x
-        self.y_plot = y[0]
-        self.y_bin_plot = y[1]
+        self.y_plot = np.exp(y[0][..., 0]) - 1.
+        self.y_bin_plot = y[1][..., 0]
         self.times = times
         self.name = name
         
@@ -17,7 +17,7 @@ class Plot(callbacks.Callback):
         if epoch % 5 == 0:
             yhat, yhat_bin = self.model.predict(self.x)
             
-            yhat_plot = np.exp(yhat) - 1.
+            yhat_plot = np.exp(yhat[..., 0]) - 1.
             yhat_bin_plot = tf.nn.softmax(yhat_bin).numpy()[..., 1]
             
             _max_ylim = max(yhat_plot.max(), self.y_plot.max())
@@ -27,7 +27,7 @@ class Plot(callbacks.Callback):
                 fig, axs = plt.subplots(2, 1, figsize=(20., 10.))
                 
                 # plot values
-                axs[0].plot(self.y_plot[idx], 'bo-', label='obs')
+                axs[0].plot(self.y_plot[idx].clip(0., None), 'bo-', label='obs')
                 axs[0].plot(yp.clip(0., None), 'ro-', label='frc')
                 axs[0].set_title('prec | ' + date.strftime('%Y-%m-%d'))
                 axs[0].set_ylim(0, _max_ylim)

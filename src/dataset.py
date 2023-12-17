@@ -94,9 +94,12 @@ def load_data_v1(path='data/sp_mirante.csv'):
     
     inputs, outputs, times = load_base_v1(path)
     
-    data_train = (inputs[:-700], outputs[:-700])
-    data_test = (inputs[-700:], outputs[-700:])
-    times_train, times_test = times[:-700], times[-700:]
+    train_mask = (times >= '2007-01') & (times <= '2020-12')
+    test_mask = times >= '2021-01'
+    
+    data_train = (inputs[train_mask], outputs[train_mask])
+    data_test = (inputs[test_mask], outputs[test_mask])
+    times_train, times_test = times[train_mask], times[test_mask]
     times_train = times_train[:-12]
     times_test = times_test[:-12]
     

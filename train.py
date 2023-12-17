@@ -3,9 +3,9 @@ import src.losses as losses
 import src.dataset as dataset
 import src.models as models
 
-x_train, y_train, x_test, y_test, weights, times_train, times_test = dataset.load_data_v2()
+x_train, y_train, x_test, y_test, weights, times_train, times_test = dataset.load_data_v1()
 
-model = models.gen_model_v2((None, x_train.shape[-1]))
+model = models.gen_model_v1((None, x_train.shape[-1]))
 model.compile('adam', ['mse', losses.WeightedSCCE(weights, from_logits=True)])
 
 model.fit(
@@ -23,4 +23,4 @@ model.fit(
 
 model.evaluate(x_test, y_test)
 
-model.save('models/model_v2.h5')
+model.save('models/model_v2.h5', save_format='tf')
