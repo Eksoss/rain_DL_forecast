@@ -42,6 +42,7 @@ Um única estação é insuficiente para enxergar eventos em transporte no entor
 124/124 [==============================] - 5s 43ms/step  
 - loss: 0.3252 - value_loss: 0.3058 - prob_loss: 0.0194  
 - val_loss: 0.9265 - val_value_loss: 0.8838 - val_prob_loss: 0.0427  
+
 #### Evaluate test
 33/33 [==============================] - 1s 12ms/step 
 - loss: 0.9186 - value_loss: 0.8717 - prob_loss: 0.0469  
@@ -82,14 +83,12 @@ O modelo enviesa facilmente, porém o erro de validação e teste são consisten
 
 #### Training
 124/124 [==============================] - 13s 109ms/step  
-- loss: 0.0704 - value_loss: 0.0663 - prob_loss: 0.0041  
-- val_loss: 1.0516 - val_value_loss: 0.9559 - val_prob_loss: 0.0957  
+- loss: 0.0722 - value_loss: 0.0682 - prob_loss: 0.0040  
+- val_loss: 1.0295 - val_value_loss: 0.9336 - val_prob_loss: 0.0959  
+
 #### Evaluate test
 33/33 [==============================] - 2s 34ms/step
-- loss: 1.0175 - value_loss: 0.9235 - prob_loss: 0.0940
-
-
-
+- loss: 1.1187 - value_loss: 1.0137 - prob_loss: 0.1050
 
 
 ## Referências

@@ -23,4 +23,4 @@ model.fit(
 
 model.evaluate(x_test, y_test)
 
-model.save('models/model_v2.h5', save_format='tf')
+model.save('models/model_v1.h5')
