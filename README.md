@@ -6,6 +6,7 @@ Escolhendo a cidade de São Paulo que tem uma sazonalidade bem característica d
 Com influências espacias como ZCOU/ZCAS trazendo umidade a noroeste, frentes frias vindas de sul, indicando a necessidade de utilizar-se
 estações no caminho destes eventos para detectar com antecedência a passagem deles em direção (ou não) da estação estudada.
 
+
 ## v1
 
 Utilizando uma única estação para avaliar o quanto de chuva é possível observar/prever usando apenas informação local.
@@ -22,20 +23,29 @@ Foram utilizadas dados da estação SP - MIRANTE (INMET), com as variáveis em f
 - temporal embedding dia do ano cos
 - temporal embedding dia do ano sin
 
-U e V são componentes do vento horizontal
-T é a temperatura observada
-e é a umidade específica calculada a partir de Td, temperatura do ponto de orvalho
+U e V são componentes do vento horizontal  
+T é a temperatura observada  
+e é a umidade específica calculada a partir de Td, temperatura do ponto de orvalho  
 
 ### Modelo | (None, 9) -> [(None + 3, 1), (None + 3, 2)]
 Modelo simples, com normalização e abstração inicial com ativação tanh, com objetivo inicial de emular os estados passados entre as células LSTM.
 E saída dupla, uma com os resultados numéricos e outra com saída categórica, para avaliar valores e probabilidade.
-O número de passos na saída é de N + 3, sendo N o número de passos dados e mais 3 passos de previsão, isto foi feito para treinar o decoder de saída para ensinar o modelo a recriar a precipitação observada e avaliar a qualidade do decoder
+O número de passos na saída é de N + 3, sendo N o número de passos dados e mais 3 passos de previsão, isto foi feito para treinar o decoder de saída para ensinar o modelo a recriar a precipitação observada e avaliar a qualidade do decoder.
 
 ### Conclusões
 A utilização do tanh antes de entrar com o LSTM esperando emular as saídas do próprio LSTM é falha, porque as saídas numéricas são regidas por um sigmoid limitadora.
 A utilização de dados de vento não são compatíveis com a utilização de uma única estação, é necessário dados espaciais para aplicar advecção ou convolução.
 
 Um única estação é insuficiente para enxergar eventos em transporte no entorno (ZCOU/ZCAS, brisas de sul/sudeste, frentes frias), mas ainda pode identificar sistemas locais como convecção.
+
+#### Training
+124/124 [==============================] - 5s 43ms/step  
+- loss: 0.3252 - value_loss: 0.3058 - prob_loss: 0.0194  
+- val_loss: 0.9265 - val_value_loss: 0.8838 - val_prob_loss: 0.0427  
+#### Evaluate test
+33/33 [==============================] - 1s 12ms/step 
+- loss: 0.9186 - value_loss: 0.8717 - prob_loss: 0.0469  
+
 
 ## v2
 
@@ -53,8 +63,8 @@ Foram utilizadas dados da estação SP - MIRANTE (INMET), com as variáveis em f
 - temporal embedding dia do ano cos
 - temporal embedding dia do ano sin
 
-T é a temperatura observada
-e é a umidade específica calculada a partir de Td, temperatura do ponto de orvalho
+T é a temperatura observada  
+e é a umidade específica calculada a partir de Td, temperatura do ponto de orvalho  
 
 ### Modelo | (None, 9) -> [(None + 3, 1), (None + 3, 2)]
 Modelo um pouco mais complexo, utilizando uma abstração inicial parecida com o modelo Xception, mas apenas com Dense,a
@@ -69,10 +79,11 @@ possibilidade do modelo estar 'acertando' os valores abstratos que ocorrem no fu
 forma correta estes valores para quantidade de chuva.
 
 O modelo enviesa facilmente, porém o erro de validação e teste são consistentes na forma em que erram.
+
 #### Training
-124/124 [==============================] - 13s 109ms/step 
-- loss: 0.0704 - value_loss: 0.0663 - prob_loss: 0.0041
-- val_loss: 1.0516 - val_value_loss: 0.9559 - val_prob_loss: 0.0957
+124/124 [==============================] - 13s 109ms/step  
+- loss: 0.0704 - value_loss: 0.0663 - prob_loss: 0.0041  
+- val_loss: 1.0516 - val_value_loss: 0.9559 - val_prob_loss: 0.0957  
 #### Evaluate test
 33/33 [==============================] - 2s 34ms/step
 - loss: 1.0175 - value_loss: 0.9235 - prob_loss: 0.0940
