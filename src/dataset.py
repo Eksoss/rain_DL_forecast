@@ -395,8 +395,8 @@ def load_era5(path, clat, clon):
             i = np.argmin(np.abs(lats - clat))
             j = np.argmin(np.abs(lons - clon))
             
-            islice = slice(i - 90, i + 91)
-            jslice = slice(j - 90, j + 91)
+            islice = slice(max(0, i - 90), i + 91)
+            jslice = slice(max(0, j - 90), j + 91)
             
             target_lats = lats[islice][::-1]
             target_lons = lons[jslice]
@@ -406,9 +406,10 @@ def load_era5(path, clat, clon):
         _, _, local_indices = np.intersect1d(time, local_time, return_indices=True)
         
         grid = nc_file[load_var][local_indices, islice, jslice][:, ::-1, :, None]
+        print(grid.shape)
         grids.append(grid)
         
-    return np.concatenate(grids, axis=-1), target_lats, target_lons, pd.Index(time)
+    return np.concatenate(grids, axis=-1), target_lats, target_lons, pd.Index(pd.to_datetime(time, utc=True))
 
 
 def load_goes(path, tlats, tlons):
@@ -437,7 +438,7 @@ def load_goes(path, tlats, tlons):
     '''
     
     base = 'D:\\cptec\\S10635346_2018%m%d%H00.nc'
-    datetimes = pd.date_range('2018-01-01T00', '2018-12-31T23', freq='6H')
+    datetimes = pd.to_datetime(pd.date_range('2018-01-01T00', '2018-12-31T23', freq='6H'), utc=True)
     
     valid_times = []
     grids = []
@@ -494,19 +495,8 @@ def load_data_v3(path='data/sp_mirante.csv', era5_path='', goes_path=''):
     era5_inputs, target_lats, target_lons, era5_times = load_era5(era5_path, center_lat, center_lon) # get (N, 181, 181, c) grid
     goes_inputs, goes_times = load_goes(goes_path, target_lats, target_lons) # usage of RectBivariateSpline & (M, 181, 181, 1) grid
     
-    print(era5_inputs.shape, goes_inputs.shape)
-    
-    _, era5_idx, goes_idx = np.intersect1d(era5_times, goes_times, return_indices=True)
-    
-    era5_inputs = era5_inputs[era5_idx]
-    goes_inputs = goes_inputs[goes_idx]
-    
-    HUE 
-    # sync time indices
-    
-    
-    train_mask = (times >= '2007-01') & (times <= '2020-12')
-    test_mask = times >= '2021-01'
+    train_mask = (times >= '2018-01') & (times <= '2018-11')
+    test_mask = times >= '2018-12'
     
     data_train = (inputs[train_mask], outputs[train_mask])
     data_test = (inputs[test_mask], outputs[test_mask])
@@ -515,33 +505,54 @@ def load_data_v3(path='data/sp_mirante.csv', era5_path='', goes_path=''):
     times_test = times_test[:-12]
     
     x_train = []
+    era5_train = []
+    goes_train = []
     y_train = []
     for i in range(data_train[0].shape[0] - 9 - 3):
         in_slice = slice(i, i + 10)
         out_slice = slice(i, i + 10 + 3)
         x_train.append(data_train[0][in_slice])
         y_train.append(data_train[1][out_slice])
+        
+        it = np.argmin(np.abs(era5_times - times_train[in_slice][-1]))
+        era5_train.append(era5_inputs[it])
+        
+        it = np.argmin(np.abs(goes_times - times_train[in_slice][-1]))
+        goes_train.append(goes_inputs[it])
     
     x_test = []
+    era5_test = []
+    goes_test = []
     y_test = []
     for i in range(data_test[0].shape[0] - 9 - 3):
         in_slice = slice(i, i + 10)
         out_slice = slice(i, i + 10 + 3)
         x_test.append(data_test[0][in_slice])
         y_test.append(data_test[1][out_slice])
+        
+        it = np.argmin(np.abs(era5_times - times_test[in_slice][-1]))
+        era5_test.append(era5_inputs[it])
+        
+        it = np.argmin(np.abs(goes_times - times_test[in_slice][-1]))
+        goes_test.append(goes_inputs[it])
     
     x_train, y_train, x_test, y_test = list(map(np.array, [x_train, y_train, x_test, y_test]))
+    era5_train, goes_train, era5_test, goes_test = list(map(np.array, [era5_train, goes_train, era5_test, goes_test]))
     
     # filter nan
     valid_train = np.min(~np.isnan(x_train), axis=(1, 2))
     x_train = x_train[valid_train]
     y_train = y_train[valid_train]
     times_train = times_train[valid_train]
+    era5_train = era5_train[valid_train]
+    goes_train = goes_train[valid_train]
     
     valid_test = np.min(~np.isnan(x_test), axis=(1, 2))
     x_test = x_test[valid_test]
     y_test = y_test[valid_test]
     times_test = times_test[valid_test]
+    era5_test = era5_test[valid_test]
+    goes_test = goes_test[valid_test]
     
     # bin & log
     y_train_bin = np.int32(y_train > 1) # > 1mm
@@ -555,10 +566,10 @@ def load_data_v3(path='data/sp_mirante.csv', era5_path='', goes_path=''):
         y_train_bin.shape[0] / (2 * np.sum(y_train_bin == 1)),
     ]
     
-    return x_train, [y_train, y_train_bin], x_test, [y_test, y_test_bin], weights, times_train, times_test
+    return [x_train, era5_train, goes_train], [y_train, y_train_bin], [x_test, era5_test, goes_test], [y_test, y_test_bin], weights, times_train, times_test
     
 
-if __name__ == '__main__':
+if __name__ == '__main__': # testing
     res = load_data_v3('../data/sp_mirante.csv')
     
     print(res)
