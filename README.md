@@ -68,7 +68,7 @@ T é a temperatura observada
 e é a umidade específica calculada a partir de Td, temperatura do ponto de orvalho  
 
 ### Modelo | (None, 9) -> [(None + 3, 1), (None + 3, 2)]
-Modelo um pouco mais complexo, utilizando uma abstração inicial parecida com o modelo Xception, mas apenas com Dense,a
+Modelo um pouco mais complexo, utilizando uma abstração inicial parecida com o modelo Xception (Chollet, 2016), mas apenas com Dense,
 ao invés de Conv2D e SeparableConv2D (poderia ser uma Conv1D + Dense). Utilização de um LSTM com retorno das sequências
 antes do LSTM original, para que as variáveis observadas fiquem com o mesmo padrão que a LSTM original produziria.
 Também adicionando uma Dense extra antes das saídas.
@@ -92,4 +92,7 @@ O modelo enviesa facilmente, porém o erro de validação e teste são consisten
 
 
 ## Referências
-Reboita, M. S., et al., 2012. Entendendo o Tempo e o Clima na América do Sul. https://periodicos.sbu.unicamp.br/ojs/index.php/td/article/view/8637425/5139
+Chollet, F., 2016. Xception: Deep Learning with Depthwise Separable Convolutions.  
+https://arxiv.org/abs/1610.02357  
+Reboita, M. S., et al., 2012. Entendendo o Tempo e o Clima na América do Sul.  
+https://periodicos.sbu.unicamp.br/ojs/index.php/td/article/view/8637425/5139  
